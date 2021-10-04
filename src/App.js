@@ -8,16 +8,13 @@ import { nanoid } from "nanoid";
 // https://www.npmjs.com/package/nanoid
 import Pagination from "./components/Pagination";
 // import { Pagination } from 'semantic-ui-react';
+import DropdownNumberOfResults from "./components/Dropdown";
 
 
 function App() {
   const [searchItem, setSearchItem] = useState("");
   const [activePage, setActivePage] = useState(1);
-  const itemsPerPage = 5;
-  let sumOfItems = 0;
-  let sumOfPages = 0;
-  let firstSlice = 0;
-  let lastSlice = 0;
+  const [numberOfArticles, setNumberOfArticles] = useState(10);
 
   const getSearchItemFX = (data) => {
     console.log(`Entered search item: ${data}`);
@@ -28,7 +25,26 @@ function App() {
     setActivePage(activePage);
   };
 
-  const fetchDataFromServer = () => {
+  const setNumberOfArticlesOnPage = (numberOfArticles) => {
+    setNumberOfArticles(numberOfArticles);
+  }
+
+  console.log(`Number of Articles per page: ${numberOfArticles}`);
+  const sumOfItems = mockData.hits.length;
+  console.log(`sumOfItems: ${sumOfItems}`);
+  const sumOfPages = Math.ceil(sumOfItems / numberOfArticles);
+  console.log(`sumOfPages: ${sumOfPages}`);
+  const firstSlice = (activePage * numberOfArticles) - numberOfArticles;
+  console.log(`firstSlice: ${firstSlice}`);
+  const lastSlice = firstSlice + numberOfArticles;
+  console.log(`lastSlice: ${lastSlice}`);
+
+
+  console.log(`Active Page: ${activePage}`);
+
+  const selectArticle = mockData.hits.slice(firstSlice, lastSlice)
+  // console.log(`Selection: ${selectArticle}`);
+  useEffect(() => {
     console.log(`Search item: ${searchItem}`);
 
     // fetch("./public/response.json")
@@ -38,24 +54,7 @@ function App() {
     //   })
     // .then((response) => console.log(response));
     console.log(mockData.hits);
-
-
-  }
-  sumOfItems = mockData.hits.length;
-  console.log(`sumOfItems: ${sumOfItems}`);
-  sumOfPages = Math.ceil(sumOfItems / itemsPerPage);
-  console.log(`sumOfPages: ${sumOfPages}`);
-  firstSlice = (activePage * itemsPerPage) - itemsPerPage;
-  console.log(`firstSlice: ${firstSlice}`);
-  lastSlice = firstSlice + itemsPerPage;
-  console.log(`lastSlice: ${lastSlice}`);
-
-
-  console.log(`Active Page: ${activePage}`);
-
-  const selectArticle = mockData.hits.slice(firstSlice, lastSlice)
-  // console.log(`Selection: ${selectArticle}`);
-  useEffect(fetchDataFromServer, [searchItem, selectArticle])
+  }, [searchItem, selectArticle, numberOfArticles])
 
   return (
     <div className="App">
@@ -79,6 +78,7 @@ function App() {
         onPaginationChange={handlePaginationChange}
         totalPages={sumOfPages}
       />
+      <DropdownNumberOfResults setNumberOfArticlesPr={setNumberOfArticlesOnPage}/>
     </div>
 
 
