@@ -4,10 +4,7 @@ import Search from './components/Search';
 import NewsArticle from './components/NewsArticle';
 // import mockData from './mockdata/response.json';
 import { nanoid } from "nanoid";
-// To create unique IDs easily
-// https://www.npmjs.com/package/nanoid
 import Pagination from "./components/Pagination";
-// import { Pagination } from 'semantic-ui-react';
 import DropdownNumberOfResults from "./components/Dropdown";
 import Comment from "./components/Comment";
 
@@ -21,7 +18,12 @@ function App() {
   const [selectedArticle, setSelectedArticle] = useState(0);
   const [comments, setComments] = useState({});
   const [commentsLoaded, setCommentsLoaded] = useState(false);
-  
+
+  const errorHandler = (error) => {
+    // the error is passed as an object
+    console.log(`Error Message: ${error.message}`); // does not actual handle the error
+  };
+
   const getSearchValue = (e) => {
     setSearchValue(() => e.target.value)
   }
@@ -30,7 +32,7 @@ function App() {
     value.preventDefault();
     setCommentsLoaded(false);
     if (searchValue.length === 0) {
-      return(null)
+      return (null)
     }
     console.log(`Entered search item: ${value}`);
     console.log(`Search item: ${searchValue}`);
@@ -44,12 +46,17 @@ function App() {
 
     fetch(url)
       .then((response) => {
+        if (!response.ok)
+          // Failed HTTP status
+          throw new Error(
+            `An error has occured during the request. HTTP status code: ${response.status}`
+          );
         return response.json();
-      })
+      }, errorHandler)
       .then((data) => {
         data.hits && setArticles(() => data.hits);
-        // console.log(data.hits);
-      });
+      })
+      .catch(errorHandler);
   }
 
 
@@ -67,41 +74,27 @@ function App() {
   const lastSlice = parseInt(firstSlice) + parseInt(numberOfArticles);
   const selectArticle = articles.slice(firstSlice, lastSlice)
 
-  
 
-  // const showComment = (selection) => {
   const setArticle = (selection) => {
-    // selection.preventDefault();
-    // console.log("clicked on article");
     console.log(selection);
     setSelectedArticle(selection);
 
     const url = `https://hn.algolia.com/api/v1/items/${selection}`;
-
-    // const parameters = {
-    //   query: selectedArticle,
-    //   // hitsPerPage: 200
-    // }
-
-    // url.search = new URLSearchParams(parameters);
 
     fetch(url)
       .then((response) => {
         return response.json();
       })
       .then((data) => {
-        // data.hits && setArticles(() => data.hits);
-        // console.log(data.children);
         setComments(data.children);
         setCommentsLoaded(true);
       });
   }
 
 
-
   useEffect(() => {
 
-  }, [searchValue]) //numberOfArticles
+  }, [searchValue])
 
 
   return (
@@ -114,7 +107,7 @@ function App() {
           selectArticle && selectArticle.map((loadedData) => {
             return (
               <Fragment key={nanoid()}>
-                <NewsArticle {...loadedData} setArticle={setArticle}/>
+                <NewsArticle {...loadedData} setArticle={setArticle} />
               </Fragment>
             );
           })
@@ -128,7 +121,7 @@ function App() {
       />
       <DropdownNumberOfResults setNumberOfArticlesPr={setNumberOfArticlesOnPage} />
 
-      {commentsLoaded ? <Comment comment={comments}/> : null}
+      {commentsLoaded ? <Comment comment={comments} /> : null}
     </div>
 
 
