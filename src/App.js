@@ -10,7 +10,8 @@ import Comment from "./components/Comment";
 
 
 function App() {
-  const url = new URL("https://hn.algolia.com/api/v1/search");
+  const urlMain = "https://hn.algolia.com/api/v1";
+  const url = new URL(urlMain + "/search");
   const [activePage, setActivePage] = useState(1);
   const [numberOfArticles, setNumberOfArticles] = useState(5);
   const [articles, setArticles] = useState([]);
@@ -31,6 +32,7 @@ function App() {
   const onSearch = (value) => {
     value.preventDefault();
     setCommentsLoaded(false);
+    
     if (searchValue.length === 0) {
       return (null)
     }
@@ -46,8 +48,7 @@ function App() {
 
     fetch(url)
       .then((response) => {
-        if (!response.ok)
-          // Failed HTTP status
+        if (!response.ok) // Failed HTTP status
           throw new Error(
             `An error has occured during the request. HTTP status code: ${response.status}`
           );
@@ -62,7 +63,7 @@ function App() {
 
   const handlePaginationChange = (_, { activePage }) => {
     setActivePage(() => activePage);
-  };
+  }
 
   const setNumberOfArticlesOnPage = (numberOfArticles) => {
     setNumberOfArticles(() => numberOfArticles);
@@ -79,16 +80,17 @@ function App() {
     console.log(selection);
     setSelectedArticle(selection);
 
-    const url = `https://hn.algolia.com/api/v1/items/${selection}`;
+    const url = urlMain + `/items/${selection}`;
 
     fetch(url)
       .then((response) => {
         return response.json();
-      })
+      }, errorHandler)
       .then((data) => {
         setComments(data.children);
         setCommentsLoaded(true);
-      });
+      })
+      .catch(errorHandler);
   }
 
 
