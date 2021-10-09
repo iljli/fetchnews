@@ -2,71 +2,119 @@ import './App.css';
 import React, { useEffect, useState, Fragment } from "react";
 import Search from './components/Search';
 import NewsArticle from './components/NewsArticle';
-import mockData from './mockdata/response.json';
+// import mockData from './mockdata/response.json';
 import { nanoid } from "nanoid";
 // To create unique IDs easily
 // https://www.npmjs.com/package/nanoid
 import Pagination from "./components/Pagination";
 // import { Pagination } from 'semantic-ui-react';
 import DropdownNumberOfResults from "./components/Dropdown";
+import Comment from "./components/Comment";
 
 
 function App() {
-  const [searchItem, setSearchItem] = useState("");
+  const url = new URL("https://hn.algolia.com/api/v1/search");
   const [activePage, setActivePage] = useState(1);
-  const [numberOfArticles, setNumberOfArticles] = useState(10);
-
-  const getSearchItemFX = (data) => {
-    console.log(`Entered search item: ${data}`);
-    setSearchItem(data);
+  const [numberOfArticles, setNumberOfArticles] = useState(5);
+  const [articles, setArticles] = useState([]);
+  const [searchValue, setSearchValue] = useState("")
+  const [selectedArticle, setSelectedArticle] = useState(0);
+  const [comments, setComments] = useState({});
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  
+  const getSearchValue = (e) => {
+    setSearchValue(() => e.target.value)
   }
 
+  const onSearch = (value) => {
+    value.preventDefault();
+    setCommentsLoaded(false);
+    if (searchValue.length === 0) {
+      return(null)
+    }
+    console.log(`Entered search item: ${value}`);
+    console.log(`Search item: ${searchValue}`);
+
+    const parameters = {
+      query: searchValue,
+      hitsPerPage: 200
+    }
+
+    url.search = new URLSearchParams(parameters);
+
+    fetch(url)
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        data.hits && setArticles(() => data.hits);
+        // console.log(data.hits);
+      });
+  }
+
+
   const handlePaginationChange = (_, { activePage }) => {
-    setActivePage(activePage);
+    setActivePage(() => activePage);
   };
 
   const setNumberOfArticlesOnPage = (numberOfArticles) => {
-    setNumberOfArticles(numberOfArticles);
+    setNumberOfArticles(() => numberOfArticles);
   }
 
-  console.log(`Number of Articles per page: ${numberOfArticles}`);
-  const sumOfItems = mockData.hits.length;
-  console.log(`sumOfItems: ${sumOfItems}`);
+  const sumOfItems = articles.length;
   const sumOfPages = Math.ceil(sumOfItems / numberOfArticles);
-  console.log(`sumOfPages: ${sumOfPages}`);
   const firstSlice = (activePage * numberOfArticles) - numberOfArticles;
-  console.log(`firstSlice: ${firstSlice}`);
-  const lastSlice = firstSlice + numberOfArticles;
-  console.log(`lastSlice: ${lastSlice}`);
+  const lastSlice = parseInt(firstSlice) + parseInt(numberOfArticles);
+  const selectArticle = articles.slice(firstSlice, lastSlice)
+
+  
+
+  // const showComment = (selection) => {
+  const setArticle = (selection) => {
+    // selection.preventDefault();
+    // console.log("clicked on article");
+    console.log(selection);
+    setSelectedArticle(selection);
+
+    const url = `https://hn.algolia.com/api/v1/items/${selection}`;
+
+    // const parameters = {
+    //   query: selectedArticle,
+    //   // hitsPerPage: 200
+    // }
+
+    // url.search = new URLSearchParams(parameters);
+
+    fetch(url)
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        // data.hits && setArticles(() => data.hits);
+        // console.log(data.children);
+        setComments(data.children);
+        setCommentsLoaded(true);
+      });
+  }
 
 
-  console.log(`Active Page: ${activePage}`);
 
-  const selectArticle = mockData.hits.slice(firstSlice, lastSlice)
-  // console.log(`Selection: ${selectArticle}`);
   useEffect(() => {
-    console.log(`Search item: ${searchItem}`);
 
-    // fetch("./public/response.json")
-    // fetch(mockData)
-    // .then((response) =>{
-    //   return response.json();
-    //   })
-    // .then((response) => console.log(response));
-    console.log(mockData.hits);
-  }, [searchItem, selectArticle, numberOfArticles])
+  }, [searchValue]) //numberOfArticles
+
 
   return (
     <div className="App">
       Hacker-News-Serach
-      <Search getSearchItem={getSearchItemFX} />
+      <Search isValue={getSearchValue} onSearch={onSearch} value={searchValue} />
 
       <div>
         {
           selectArticle && selectArticle.map((loadedData) => {
             return (
               <Fragment key={nanoid()}>
-                <NewsArticle {...loadedData} />
+                <NewsArticle {...loadedData} setArticle={setArticle}/>
               </Fragment>
             );
           })
@@ -78,7 +126,9 @@ function App() {
         onPaginationChange={handlePaginationChange}
         totalPages={sumOfPages}
       />
-      <DropdownNumberOfResults setNumberOfArticlesPr={setNumberOfArticlesOnPage}/>
+      <DropdownNumberOfResults setNumberOfArticlesPr={setNumberOfArticlesOnPage} />
+
+      {commentsLoaded ? <Comment comment={comments}/> : null}
     </div>
 
 

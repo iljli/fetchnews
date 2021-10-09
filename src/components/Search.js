@@ -1,19 +1,15 @@
 import React, { useState } from "react";
 
-function Search({ getSearchItem}) {
-    const [searchItem, setSearchItem] = useState("");
-
-    const handleInputChange = (event) => {
-        setSearchItem(event.target.value);
-    }
+function Search(props) {
+    const [searchItems, setSearchItems] = useState("");
 
     return (
         <div>
-            Search-Component
+            Search-Component:
 
-            <form onSubmit={() => getSearchItem(searchItem)}>
+            <form onSubmit={(e) => props.onSearch(e)}>
                 <input
-                    onChange={handleInputChange}
+                    onChange={(e) => props.isValue(e)}
                     type="text"
                     name="searchItem"
                     placeholder="Search..."
